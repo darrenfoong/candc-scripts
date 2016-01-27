@@ -1,0 +1,19 @@
+#!/bin/bash
+
+BIN=/Users/stephenclark/Mystuff/parser/candc-1.00/bin
+WORK=working/jack_knifed_stagged
+MODELS=/Users/stephenclark/Mystuff/code/java/java_parser_repos/models
+INPUT=/Users/stephenclark/Mystuff/code/java/java_parser_repos/data/jacknifed
+
+mkdir -p $WORK
+
+BETA=0.005
+TAG_DICT=100
+
+for N in {1..10}; do
+    MODEL=$MODELS/super.$N
+    echo "supertagging chunk $N"
+    $BIN/super --model $MODEL --input $INPUT/wsj02-21.pos.$N --output $WORK/wsj02-21.stagged.$N
+    $BIN/msuper --beta $BETA --dict_cutoff $TAG_DICT --model $MODEL --input $INPUT/wsj02-21.pos.$N --output $WORK/wsj02-21.stagged.$BETA.$TAG_DICT.$N
+done
+

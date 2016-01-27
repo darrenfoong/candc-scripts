@@ -1,0 +1,23 @@
+#!/usr/bin/python
+
+import sys
+
+fname = sys.argv[1]
+numwords = 0
+numtags = 0
+
+def readPreface(f):
+	line = next(f)
+	while line[0] == "#":
+		line = next(f)
+
+with open(fname) as f:
+	readPreface(f)
+	for line in f:
+		if line != "\n":
+			numwords += 1
+			numtags += int(line.split("\t")[2])
+	f.close()
+
+
+print "(" + str(numtags) + "/" + str(numwords) + ") " + str(numtags/float(numwords))

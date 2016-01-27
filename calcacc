@@ -1,0 +1,40 @@
+#!/usr/bin/python
+
+import sys
+
+tagfname = sys.argv[1]
+goldfname = sys.argv[2]
+numwords = 0
+numhits = 0
+
+glist = []
+
+def readPreface(f):
+	line = next(f)
+	while line[0] == "#":
+		line = next(f)
+
+def getNextGold(goldf):
+	global glist
+	if len(glist) == 0:
+		gline = next(goldf)
+		while gline == "\n":
+			gline = next(goldf)
+		glist = gline[:-1].split(" ")
+		glist.reverse()
+	return glist.pop().split("|")[2]
+
+with open(tagfname) as tagf:
+	with open(goldfname) as goldf:
+		readPreface(tagf)
+		readPreface(goldf)
+		for tline in tagf:
+			if tline != "\n":
+				tlist = tline.split("\t")
+				tags = tlist[3::2]
+				numwords += 1
+
+				if getNextGold(goldf) in tags:
+					numhits += 1
+
+print "(" + str(numhits) + "/" + str(numwords) + ") " + str(numhits/float(numwords))
