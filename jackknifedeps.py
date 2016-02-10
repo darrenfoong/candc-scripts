@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# 100216: this script is no longer required
+
 # The following file structure is assumed:
 # output
 # |-incorrect_deps
