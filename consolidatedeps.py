@@ -9,7 +9,7 @@
 #  ...
 #  |-splitN
 #    > parser.beam.out (optional)
-#    > parser.beam.out.incorrect
+#    > parser.beam.out.chartdeps
 # scripts
 # > consolidatedeps.py (this script)
 
@@ -26,57 +26,59 @@ import re
 WORKING_DIR = "../output/incorrect_deps/"
 
 NUM_CHUNKS = 10
-CCG = False
 
 if len(sys.argv) > 1:
     NUM_CHUNKS = int(sys.argv[1])
 
-if len(sys.argv) > 2 and sys.argv[2] == "ccg":
-    CCG = True
-
 deps = dict()
 
-with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
-     open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file:
+def canonize(dep):
+    # need to strip indices and possibly add additional dep info
+    return dep
 
-    def correct_deps_file_path(i):
-        if CCG:
-            return "../data/wsj02-21.ccgbank_deps"
+def add(dep, inc):
+    dep = dep[:-1]
+    if dep != "":
+        dep = canonize(dep)
+        if dep in deps:
+            deps[dep] += inc
         else:
-            return WORKING_DIR + "split" + str(i) + "/parser.beam.out"
+            deps[dep] = inc
+
+with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
+     open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file
+     open("../data/wsj02-21.ccgbank_deps", "r") as correct_deps_file:
+
+    while correct_deps_file.readline().startswith("#"):
+        pass
+
+    correct_deps_sents = correct_deps_file.read().split("\n\n")[:-1]
+
+    print("Number of sentences in correct_deps:" + str(len(correct_deps)))
+
+    correct_deps_sent_ptr = 0
 
     for i in range(1, NUM_CHUNKS+1):
-        with open(correct_deps_file_path(i), "r") as correct_deps_file, \
-             open(WORKING_DIR + "split" + str(i) + "/parser.beam.out.incorrect", "r") as incorrect_deps_file:
-
-            if (CCG and i == 1) or (not CCG):
-                print "Reading correct deps"
-
-                while correct_deps_file.readline().startswith("#"):
-                    pass
-
-                for line in correct_deps_file:
-                    # need to check that preface has been read
-                    line = line[:-1]
-                    if line != "":
-                        if line in deps:
-                            deps[line] += 1
-                        else:
-                            deps[line] = 1
-
-            print "Reading incorrect deps"
+        with open(WORKING_DIR + "split" + str(i) + "/parser.beam.out.chartdeps", "r") as incorrect_deps_file:
 
             while incorrect_deps_file.readline().startswith("#"):
                 pass
 
-            for line in incorrect_deps_file:
-                # need to check that preface has been read
-                line = line[:-1]
-                if line != "":
-                    if line in deps:
-                        deps[line] -= 1
-                    else:
-                        deps[line] = -1
+            incorrect_deps_sents = incorrect_deps_file.read().split("\n\n")[:-1]
+
+            print("Number of sentences in incorrect deps (split " + str(i) + "): " + str(len(incorrect_deps_sents)))
+
+            for incorrect_dep_sent in incorrect_deps_sents:
+                incorrect_deps = incorrect_dep_sent.split("\n")
+                correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
+
+                for incorrect_dep in incorrect_deps:
+                    add(incorrect_dep, -1)
+
+                for correct_dep in correct_deps:
+                    add(correct_dep, 1)
+
+                correct_deps_ptr += 1
 
     output_correct_deps_file.write("#\n\n")
     output_incorrect_deps_file.write("#\n\n")
