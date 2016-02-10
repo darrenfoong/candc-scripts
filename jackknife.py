@@ -2,15 +2,13 @@
 
 # The following file structure is assumed:
 # data
-# |-baseline_expts
-#  |-working
-#   |-data
-#     > wsj02-21.oracle_deps.0.01.100.all
-#     > wsj02-21.oracle_deps.0.01.100.all.per_cell
-#    |-jack_knifed_stagged
-#      > wsj02-21.stagged.0.01.100.all
-#   |-gold
-#     > wsj02-21.roots
+# |-auto-stagged
+#   > wsj02-21.stagged.0.01.100.all
+# |-gold
+#   > wsj02-21.roots
+# |-oracle-gold
+#   > wsj02-21.oracle_deps.0.01.100.all
+#   > wsj02-21.oracle_deps.0.01.100.all.per_cell
 # |-incorrect_deps -|
 #  |-split1         |-- will be created by this script
 #  ...              |
@@ -34,15 +32,15 @@ import os
 import math
 import re
 
-WORKING_DIR = "../data/baseline_expts/working/"
+WORKING_DIR = "../data/"
 OUTPUT_DIR = "../data/incorrect_deps/"
 input_file_base = "wsj02-21.stagged.0.01.100.all"
 deps_file_base = "wsj02-21.oracle_deps.0.01.100.all"
 roots_file_base = "wsj02-21.roots"
 
-input_file_path = WORKING_DIR + "data/jack_knifed_stagged/" + input_file_base
-deps_file_path = WORKING_DIR + "data/" + deps_file_base
-deps_per_cell_file_path = WORKING_DIR + "data/" + deps_file_base + ".per_cell"
+input_file_path = WORKING_DIR + "auto-stagged/" + input_file_base
+deps_file_path = WORKING_DIR + "oracle-gold/" + deps_file_base
+deps_per_cell_file_path = WORKING_DIR + "oracle-gold/" + deps_file_base + ".per_cell"
 roots_file_path = WORKING_DIR + "gold/" + roots_file_base
 
 NUM_CHUNKS = 10

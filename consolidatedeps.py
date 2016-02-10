@@ -2,7 +2,8 @@
 
 # The following file structure is assumed:
 # data
-# > wsj02-21.ccgbank_deps
+# |-gold
+#   > wsj02-21.ccgbank_deps
 # output
 # |-incorrect_deps
 #  |-split1
@@ -47,7 +48,7 @@ def add(dep, inc):
 
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
      open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file
-     open("../data/wsj02-21.ccgbank_deps", "r") as correct_deps_file:
+     open("../data/gold/wsj02-21.ccgbank_deps", "r") as correct_deps_file:
 
     while correct_deps_file.readline().startswith("#"):
         pass
