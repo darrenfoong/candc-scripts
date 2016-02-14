@@ -28,17 +28,45 @@ WORKING_DIR = "../output/incorrect_deps/"
 
 NUM_CHUNKS = 10
 
+CONVERT_MAX = 10
+CONVERT_MIN = 3
+UNCONVERT_MAX = (2 * CONVERT_MAX) - 2
+UNCONVERT_MIN = (2 * CONVERT_MIN) - 2
+
 if len(sys.argv) > 1:
     NUM_CHUNKS = int(sys.argv[1])
 
 deps = dict()
+
+def convert_lines(f):
+    # replaces empty entries with blank lines
+    for i in range(CONVERT_MAX, CONVERT_MIN-1, -1):
+        current = "\n" * i
+        repl = "[CONVERT " + str(i) + "]"
+        f = f.replace(current, repl)
+    for i in range(CONVERT_MAX, CONVERT_MIN-1, -1):
+        current = "[CONVERT " + str(i) + "]"
+        repl = "\n" * ((2 * i) -2)
+        f = f.replace(current, repl)
+    return f
+
+def unconvert_lines(f):
+    # replaces blank lines with empty entries
+    for i in range(UNCONVERT_MAX, UNCONVERT_MIN-1, -2):
+        current = "\n" * i
+        repl = "[UNCONVERT " + str(i) + "]"
+        f = f.replace(current, repl)
+    for i in range(UNCONVERT_MAX, UNCONVERT_MIN-1, -2):
+        current = "[UNCONVERT " + str(i) + "]"
+        repl = "\n" * ((i/2) + 1)
+        f = f.replace(current, repl)
+    return f
 
 def canonize(dep):
     # need to strip indices and possibly add additional dep info
     return dep
 
 def add(dep, inc):
-    dep = dep[:-1]
     if dep != "":
         dep = canonize(dep)
         if dep in deps:
@@ -47,15 +75,15 @@ def add(dep, inc):
             deps[dep] = inc
 
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
-     open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file
+     open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file, \
      open("../data/gold/wsj02-21.ccgbank_deps", "r") as correct_deps_file:
 
     while correct_deps_file.readline().startswith("#"):
         pass
 
-    correct_deps_sents = correct_deps_file.read().split("\n\n")[:-1]
+    correct_deps_sents = convert_lines(correct_deps_file.read()).split("\n\n")[:-1]
 
-    print("Number of sentences in correct_deps:" + str(len(correct_deps)))
+    print("Number of sentences in correct_deps: " + str(len(correct_deps_sents)))
 
     correct_deps_sent_ptr = 0
 
@@ -73,13 +101,16 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
                 incorrect_deps = incorrect_dep_sent.split("\n")
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
 
+                incorrect_deps = list(set(incorrect_deps))
+                correct_deps = list(set(correct_deps))
+
                 for incorrect_dep in incorrect_deps:
                     add(incorrect_dep, -1)
 
                 for correct_dep in correct_deps:
                     add(correct_dep, 1)
 
-                correct_deps_ptr += 1
+                correct_deps_sent_ptr += 1
 
     output_correct_deps_file.write("#\n\n")
     output_incorrect_deps_file.write("#\n\n")
@@ -93,12 +124,12 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     for dep, value in deps.iteritems():
         if value > 0:
             correct_count += 1
-            output_correct_deps_file.write(dep + " 1\n")
+            output_correct_deps_file.write(dep + " 1 " + str(value) + "\n")
         else:
             if value == 0:
                 tie_count += 1
             incorrect_count += 1
-            output_incorrect_deps_file.write(dep + " 0\n")
+            output_incorrect_deps_file.write(dep + " 0 " + str(value) + "\n")
 
     print "Correct deps: " + str(correct_count)
     print "Incorrect deps: " + str(incorrect_count)
