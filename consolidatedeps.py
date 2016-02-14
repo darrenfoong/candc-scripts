@@ -64,6 +64,10 @@ def unconvert_lines(f):
 
 def canonize(dep):
     # need to strip indices and possibly add additional dep info
+    dep_values = dep.split(" ")
+    dep_values[0] = "_".join(dep_values[0].split("_")[:-1])
+    dep_values[3] = "_".join(dep_values[3].split("_")[:-1])
+    dep = " ".join(dep_values)
     return dep
 
 def add(dep, inc):
@@ -101,13 +105,10 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
                 incorrect_deps = incorrect_dep_sent.split("\n")
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
 
-                incorrect_deps = list(set(incorrect_deps))
-                correct_deps = list(set(correct_deps))
-
-                for incorrect_dep in incorrect_deps:
+                for incorrect_dep in set(incorrect_deps):
                     add(incorrect_dep, -1)
 
-                for correct_dep in correct_deps:
+                for correct_dep in set(correct_deps):
                     add(correct_dep, 1)
 
                 correct_deps_sent_ptr += 1
@@ -121,7 +122,7 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     incorrect_count = 0
     tie_count = 0
 
-    for dep, value in deps.iteritems():
+    for dep, value in sorted(deps.iteritems(), key=lambda x: x[1]):
         if value > 0:
             correct_count += 1
             output_correct_deps_file.write(dep + " 1 " + str(value) + "\n")
