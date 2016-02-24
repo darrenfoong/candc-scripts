@@ -141,13 +141,14 @@ with open(input_file_path, "r") as input_file, \
         right_end = NUM_SENTENCES
 
         preface = ["#"]
-        input_outer = preface + inputs[left_start:left_end] + inputs[right_start:right_end]
-        input_inner = preface + inputs[start:end]
-        deps_outer = preface + deps[left_start:left_end] + deps[right_start:right_end]
-        deps_per_cell_outer  = preface + deps_per_cell[left_start:left_end] + deps_per_cell[right_start:right_end]
-        roots_outer = ["#\n"] + roots[left_start:left_end] + roots[right_start:right_end]
+	empty_line = [""]
+        input_outer = preface + inputs[left_start:left_end] + inputs[right_start:right_end] + empty_line
+        input_inner = preface + inputs[start:end] + empty_line
+        deps_outer = preface + deps[left_start:left_end] + deps[right_start:right_end] + empty_line
+        deps_per_cell_outer  = preface + deps_per_cell[left_start:left_end] + deps_per_cell[right_start:right_end] + empty_line
+        roots_outer = ["#\n"] + roots[left_start:left_end] + roots[right_start:right_end] + empty_line
 
-        print(str(len(input_outer)-1) + ", " + str(len(input_inner)-1) + ", " + str(len(input_outer)+len(input_inner)-2))
+        print(str(len(input_outer)-2) + ", " + str(len(input_inner)-2) + ", " + str(len(input_outer)+len(input_inner)-4))
 
         with open(OUTPUT_DIR + "split" + str(i) + "/" + input_file_base + ".split" + str(i), "w") as output_input_file, \
              open(OUTPUT_DIR + "split" + str(i) + "/" + input_file_base + ".split" + str(i) + ".parse", "w") as output_input_parse_file, \
