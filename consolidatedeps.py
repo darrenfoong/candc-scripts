@@ -63,15 +63,18 @@ def unconvert_lines(f):
     return f
 
 def canonize(dep, pos_tags):
-    # need to strip indices and possibly add additional dep info
     dep_values = dep.split(" ")
     head = dep_values[0].split("_")
     dependent = dep_values[3].split("_")
+    head_index = int(head[-1]) - 1
+    dependent_index = int(dependent[-1]) - 1
+
     dep_values[0] = "_".join(head[:-1])
     dep_values[3] = "_".join(dependent[:-1])
-    dep_values[4] = abs(dependent - head)
-    dep_values[5] = pos_tags[head]
-    dep_values[6] = pos_tags[dependent]
+    dep_values.append(str(abs(head_index - dependent_index)))
+    dep_values.append(pos_tags[head_index])
+    dep_values.append(pos_tags[dependent_index])
+
     dep = " ".join(dep_values)
     return dep
 
