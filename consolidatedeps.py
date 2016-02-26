@@ -105,23 +105,23 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     correct_deps_sent_ptr = 0
 
     for i in range(1, NUM_CHUNKS+1):
-        with open(WORKING_DIR + "split" + str(i) + "/parser.beam.out.chartdeps", "r") as incorrect_deps_file:
+        with open(WORKING_DIR + "split" + str(i) + "/parser.beam.out.chartdeps", "r") as chart_deps_file:
 
-            while incorrect_deps_file.readline().startswith("#"):
+            while chart_deps_file.readline().startswith("#"):
                 pass
 
-            incorrect_deps_sents = incorrect_deps_file.read().split("\n\n")[:-1]
+            chart_deps_sents = chart_deps_file.read().split("\n\n")[:-1]
 
-            print("Number of sentences in incorrect deps (split " + str(i) + "): " + str(len(incorrect_deps_sents)))
+            print("Number of sentences in chart deps (split " + str(i) + "): " + str(len(chart_deps_sents)))
 
-            for incorrect_dep_sent in incorrect_deps_sents:
-                incorrect_deps = incorrect_dep_sent.split("\n")
+            for chart_dep_sent in chart_deps_sents:
+                chart_deps = chart_dep_sent.split("\n")
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
                 gold_supertags = gold_supertags_sents[correct_deps_sent_ptr].split("\n")
 
                 pos_tags = map((lambda e: e.split(" ")[1]), gold_supertags)
 
-                for incorrect_dep in set(incorrect_deps):
+                for incorrect_dep in set(chart_deps) - set(correct_deps):
                     add(incorrect_dep, -1, pos_tags)
 
                 for correct_dep in set(correct_deps):
