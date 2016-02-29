@@ -3,19 +3,27 @@
 # The following file structure is assumed:
 # data
 # |-gold
+#   > wsj00.ccgbank_deps
+#   > wsj00.stagged.reformat
 #   > wsj02-21.ccgbank_deps
+#   > wsj02-21.stagged.reformat
 # output
+# |-incorrect_deps_test
+#  |-split1
+#    > parser.beam.out.chartdeps
 # |-incorrect_deps
 #  |-split1
 #  ...
 #  |-splitN
-#    > parser.beam.out (optional)
 #    > parser.beam.out.chartdeps
 # scripts
 # > consolidatedeps.py (this script)
 
 # The following files will be created:
 # output
+# |-incorrect_deps_test
+#   > deps_correct
+#   > deps_incorrect
 # |-incorrect_deps
 #   > deps_correct
 #   > deps_incorrect
@@ -25,6 +33,8 @@ import os
 import re
 
 WORKING_DIR = "../output/incorrect_deps/"
+CORRECT_DEPS_FILE = "../data/gold/wsj02-21.ccgbank_deps"
+GOLD_SUPERTAGS_FILE = "../data/gold/wsj02-21.stagged.reformat"
 
 NUM_CHUNKS = 10
 
@@ -34,7 +44,13 @@ UNCONVERT_MAX = (2 * CONVERT_MAX) - 2
 UNCONVERT_MIN = (2 * CONVERT_MIN) - 2
 
 if len(sys.argv) > 1:
-    NUM_CHUNKS = int(sys.argv[1])
+    if sys.argv[1] == "test":
+        NUM_CHUNKS = 1
+        WORKING_DIR = "../output/incorrect_deps_test"
+        CORRECT_DEPS_FILE = "../data/gold/wsj00.ccgbank_deps"
+        GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
+    else:
+        NUM_CHUNKS = int(sys.argv[1])
 
 deps = dict()
 
@@ -88,8 +104,8 @@ def add(dep, inc, pos_tags):
 
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
      open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file, \
-     open("../data/gold/wsj02-21.ccgbank_deps", "r") as correct_deps_file, \
-     open("../data/gold/wsj02-21.stagged.reformat", "r") as gold_supertags_file:
+     open(CORRECT_DEPS_FILE, "r") as correct_deps_file, \
+     open(GOLD_SUPERTAGS_FILE, "r") as gold_supertags_file:
 
     while correct_deps_file.readline().startswith("#"):
         pass
