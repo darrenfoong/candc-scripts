@@ -126,11 +126,12 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
             while chart_deps_file.readline().startswith("#"):
                 pass
 
-            chart_deps_sents = chart_deps_file.read().split("\n\n")[:-1]
+            chart_deps_sents = convert_lines(chart_deps_file.read()).split("\n\n")[:-1]
 
             print("Number of sentences in chart deps (split " + str(i) + "): " + str(len(chart_deps_sents)))
 
             for chart_dep_sent in chart_deps_sents:
+                print("Processing sentence " + str(correct_deps_sent_ptr+1))
                 chart_deps = chart_dep_sent.split("\n")
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
                 gold_supertags = gold_supertags_sents[correct_deps_sent_ptr].split("\n")
