@@ -46,7 +46,7 @@ UNCONVERT_MIN = (2 * CONVERT_MIN) - 2
 if len(sys.argv) > 1:
     if sys.argv[1] == "test":
         NUM_CHUNKS = 1
-        WORKING_DIR = "../output/incorrect_deps_test"
+        WORKING_DIR = "../output/incorrect_deps_test/"
         CORRECT_DEPS_FILE = "../data/gold/wsj00.ccgbank_deps"
         GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
     else:
