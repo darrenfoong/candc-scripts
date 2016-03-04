@@ -78,6 +78,19 @@ def unconvert_lines(f):
         f = f.replace(current, repl)
     return f
 
+MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
+
+def strip_markup(dep):
+    if dep != "":
+        dep_values = dep.split(" ")[:-1]
+        category = MARKUP.sub("", dep_values[1])
+        if category[0] == "(":
+            category = category[1:-1]
+        dep_values[1] = category
+        return " ".join(dep_values)
+    else:
+        return dep
+
 def canonize(dep, pos_tags):
     dep_values = dep.split(" ")
     head = dep_values[0].split("_")
@@ -133,6 +146,8 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
             for chart_dep_sent in chart_deps_sents:
                 print("Processing sentence " + str(correct_deps_sent_ptr+1))
                 chart_deps = chart_dep_sent.split("\n")
+                chart_deps = map((lambda e: strip_markup(e)), chart_deps)
+
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
                 gold_supertags = gold_supertags_sents[correct_deps_sent_ptr].split("\n")
 
