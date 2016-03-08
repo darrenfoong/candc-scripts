@@ -43,6 +43,12 @@ CONVERT_MIN = 3
 UNCONVERT_MAX = (2 * CONVERT_MAX) - 2
 UNCONVERT_MIN = (2 * CONVERT_MIN) - 2
 
+# classified as correct if dep > CORRECT_THRESHOLD
+CORRECT_THRESHOLD = 0
+
+# classfied as incorrect if dep < INCORRECT_THRESHOLD
+INCORRECT_THRESHOLD = 1
+
 if len(sys.argv) > 1:
     if sys.argv[1] == "test":
         NUM_CHUNKS = 1
@@ -171,10 +177,10 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     tie_count = 0
 
     for dep, value in sorted(deps.iteritems(), key=lambda x: x[1]):
-        if value > 0:
+        if value > CORRECT_THRESHOLD:
             correct_count += 1
             output_correct_deps_file.write(dep + " 1 " + str(value) + "\n")
-        else:
+        else if value < INCORRECT_THRESHOLD:
             if value == 0:
                 tie_count += 1
             incorrect_count += 1
