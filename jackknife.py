@@ -7,6 +7,7 @@
 # |-gold
 #   > wsj02-21.gold_deps
 #   > wsj02-21.roots
+#   > wsj02-21.stagged.reformat
 # |-oracle-gold
 #   > wsj02-21.oracle_deps.0.01.100.all
 #   > wsj02-21.oracle_deps.0.01.100.all.per_cell
@@ -25,9 +26,10 @@
 # > wsj02-21.stagged.0.01.100.all.splitN.parse
 # > wsj02-21.roots.splitN
 # > wsj02-21.gold_deps.splitN
+# > wsj02-21.stagged.reformat.splitN
 
 # This program accepts four optional arguments:
-# jackknife.py [<num_chunks> <num_sentences> [<input_file> <deps_file> <roots_file>]]
+# jackknife.py [<num_chunks> <num_sentences> [<input_file> <deps_file> <roots_file> <gold_deps_file> <gold_stags_file>]]
 
 import sys
 import os
@@ -40,12 +42,14 @@ input_file_base = "wsj02-21.stagged.0.01.100.all"
 deps_file_base = "wsj02-21.oracle_deps.0.01.100.all"
 roots_file_base = "wsj02-21.roots"
 gold_deps_file_base = "wsj02-21.gold_deps"
+gold_stags_file_base = "wsj02-21.stagged.reformat"
 
 input_file_path = WORKING_DIR + "auto-stagged/" + input_file_base
 deps_file_path = WORKING_DIR + "oracle-gold/" + deps_file_base
 deps_per_cell_file_path = WORKING_DIR + "oracle-gold/" + deps_file_base + ".per_cell"
 roots_file_path = WORKING_DIR + "gold/" + roots_file_base
 gold_deps_file_path = WORKING_DIR + "gold/" + gold_deps_file_base
+gold_stags_file_path = WORKING_DIR + "gold/" + gold_stags_file_base
 
 NUM_CHUNKS = 10
 NUM_SENTENCES = 39604
@@ -59,7 +63,7 @@ if len(sys.argv) > 2:
     NUM_CHUNKS = int(sys.argv[1])
     NUM_SENTENCES = int(sys.argv[2])
 
-if len(sys.argv) == 8:
+if len(sys.argv) == 9:
     input_file_path = sys.argv[3]
     deps_file_path = sys.argv[4]
     deps_per_cell_file_path = sys.argv[5]
@@ -70,6 +74,7 @@ if len(sys.argv) == 8:
     deps_per_cell_file_base = os.path.basename(deps_per_cell_file_path)
     roots_file_base = os.path.basename(roots_file_path)
     gold_deps_file_base = os.path.basename(gold_deps_file_path)
+    gold_stags_file_base = os.path.basename(gold_stags_file_path)
 
 sentences_per_chunk = int(math.ceil(NUM_SENTENCES/float(NUM_CHUNKS)))
 
@@ -77,7 +82,8 @@ with open(input_file_path, "r") as input_file, \
      open(deps_file_path, "r") as deps_file, \
      open(deps_per_cell_file_path, "r") as deps_per_cell_file, \
      open(roots_file_path, "r") as roots_file, \
-     open(gold_deps_file_path, "r") as gold_deps_file:
+     open(gold_deps_file_path, "r") as gold_deps_file, \
+     open(gold_stags_file_path, "r") as gold_stags_file:
 
     print "Reading prefaces"
 
@@ -90,6 +96,8 @@ with open(input_file_path, "r") as input_file, \
     while roots_file.readline().startswith("#"):
         pass
     while gold_deps_file.readline().startswith("#"):
+        pass
+    while gold_stags_file.readline().startswith("#"):
         pass
 
     print "Splitting files"
@@ -123,6 +131,7 @@ with open(input_file_path, "r") as input_file, \
     deps_per_cell = convert_lines(deps_per_cell_file.read()).split("\n\n")[:-1]
     roots = roots_file.read().splitlines();
     gold_deps = convert_lines(gold_deps_file.read()).split("\n\n")[:-1]
+    gold_stags = convert_lines(gold_stags_file.read()).split("\n\n")[:-1]
 
     if len(inputs) != NUM_SENTENCES:
         raise InputError("Number of sentences read: " + str(len(inputs)))
@@ -133,7 +142,9 @@ with open(input_file_path, "r") as input_file, \
     if len(roots) != NUM_SENTENCES:
         raise InputError("Number of roots read: " + str(len(roots)))
     if len(gold_deps) != NUM_SENTENCES:
-        raise InputError("Number of gold deps read: " + str(len(roots)))
+        raise InputError("Number of gold deps read: " + str(len(gold_deps)))
+    if len(gold_stags) != NUM_SENTENCES:
+        raise InputError("Number of gold stags read: " + str(len(gold_stags)))
 
     print "Making " + OUTPUT_DIR
 
@@ -160,6 +171,7 @@ with open(input_file_path, "r") as input_file, \
         deps_per_cell_outer = preface + deps_per_cell[left_start:left_end] + deps_per_cell[right_start:right_end] + empty_line
         roots_outer = ["#\n"] + roots[left_start:left_end] + roots[right_start:right_end] + empty_line
         gold_deps_outer = preface + gold_deps[left_start:left_end] + gold_deps[right_start:right_end] + empty_line
+        gold_stags_outer = preface + gold_stags[left_start:left_end] + gold_stags[right_start:right_end] + empty_line
 
         print(str(len(input_outer)-2) + ", " + str(len(input_inner)-2) + ", " + str(len(input_outer)+len(input_inner)-4))
 
@@ -168,7 +180,8 @@ with open(input_file_path, "r") as input_file, \
              open(OUTPUT_DIR + "split" + str(i) + "/" + deps_file_base + ".split" + str(i), "w") as output_deps_file, \
              open(OUTPUT_DIR + "split" + str(i) + "/" + deps_file_base + ".split" + str(i) + ".per_cell", "w") as output_deps_per_cell_file, \
              open(OUTPUT_DIR + "split" + str(i) + "/" + roots_file_base + ".split" + str(i), "w") as output_roots_file, \
-             open(OUTPUT_DIR + "split" + str(i) + "/" + gold_deps_file_base + ".split" + str(i), "w") as output_gold_deps_file:
+             open(OUTPUT_DIR + "split" + str(i) + "/" + gold_deps_file_base + ".split" + str(i), "w") as output_gold_deps_file, \
+             open(OUTPUT_DIR + "split" + str(i) + "/" + gold_stags_file_base + ".split" + str(i), "w") as output_gold_stags_file:
 
             output_input_file.write(unconvert_lines("\n\n".join(input_outer)))
             output_input_parse_file.write(unconvert_lines("\n\n".join(input_inner)))
@@ -176,3 +189,4 @@ with open(input_file_path, "r") as input_file, \
             output_deps_per_cell_file.write(unconvert_lines("\n\n".join(deps_per_cell_outer)))
             output_roots_file.write("\n".join(roots_outer))
             output_gold_deps_file.write(unconvert_lines("\n\n".join(gold_deps_outer)))
+            output_gold_stags_file.write(unconvert_lines("\n\n".join(gold_stags_outer)))
