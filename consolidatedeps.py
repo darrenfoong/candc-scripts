@@ -180,7 +180,7 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
         if value > CORRECT_THRESHOLD:
             correct_count += 1
             output_correct_deps_file.write(dep + " 1 " + str(value) + "\n")
-        else if value < INCORRECT_THRESHOLD:
+        elif value < INCORRECT_THRESHOLD:
             if value == 0:
                 tie_count += 1
             incorrect_count += 1
