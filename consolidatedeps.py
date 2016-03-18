@@ -116,10 +116,14 @@ def canonize(dep, pos_tags):
 def add(dep, inc, pos_tags):
     if dep != "":
         dep = canonize(dep, pos_tags)
-        if dep in deps:
-            deps[dep] += inc
+        if dep not in deps:
+            deps[dep] = (0, 0)
+
+        pos, neg = deps[dep]
+        if inc == 1:
+            deps[dep] = (pos+1, neg)
         else:
-            deps[dep] = inc
+            deps[dep] = (pos, neg+1)
 
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
      open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file, \
@@ -177,14 +181,20 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     tie_count = 0
 
     for dep, value in sorted(deps.iteritems(), key=lambda x: x[1]):
-        if value > CORRECT_THRESHOLD:
+        pos, neg = value
+        if pos > 0:
+            final_value = pos
+        else:
+            final_value = pos - neg
+
+        if final_value > CORRECT_THRESHOLD:
             correct_count += 1
-            output_correct_deps_file.write(dep + " 1 " + str(value) + "\n")
-        elif value < INCORRECT_THRESHOLD:
-            if value == 0:
+            output_correct_deps_file.write(dep + " 1 " + str(final_value) + "\n")
+        elif final_value < INCORRECT_THRESHOLD:
+            if final_value == 0:
                 tie_count += 1
             incorrect_count += 1
-            output_incorrect_deps_file.write(dep + " 0 " + str(value) + "\n")
+            output_incorrect_deps_file.write(dep + " 0 " + str(final_value) + "\n")
 
     print "Correct deps: " + str(correct_count)
     print "Incorrect deps: " + str(incorrect_count)
