@@ -31,6 +31,7 @@
 import sys
 import os
 import re
+import itertools
 
 WORKING_DIR = "../output/incorrect_deps/"
 CORRECT_DEPS_FILE = "../data/gold/wsj02-21.ccgbank_deps"
@@ -182,19 +183,27 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
 
     for dep, value in sorted(deps.iteritems(), key=lambda x: x[1]):
         pos, neg = value
-        if pos > 0:
-            final_value = pos
-        else:
-            final_value = pos - neg
+        #if pos > 0:
+        #    final_value = pos
+        #else:
+        #    final_value = pos - neg
 
-        if final_value > CORRECT_THRESHOLD:
-            correct_count += 1
-            output_correct_deps_file.write(dep + " 1 " + str(final_value) + "\n")
-        elif final_value < INCORRECT_THRESHOLD:
-            if final_value == 0:
-                tie_count += 1
-            incorrect_count += 1
-            output_incorrect_deps_file.write(dep + " 0 " + str(final_value) + "\n")
+        #if final_value > CORRECT_THRESHOLD:
+        #    correct_count += 1
+        #    output_correct_deps_file.write(dep + " 1 " + str(final_value) + "\n")
+        #elif final_value < INCORRECT_THRESHOLD:
+        #    if final_value == 0:
+        #        tie_count += 1
+        #    incorrect_count += 1
+        #    output_incorrect_deps_file.write(dep + " 0 " + str(final_value) + "\n")
+
+        for _ in itertools.repeat(None, pos):
+            output_correct_deps_file.write(dep + " 1 " + str(pos) + "\n")
+        for _ in itertools.repeat(None, neg):
+            output_incorrect_deps_file.write(dep + " 0 " + str(neg) + "\n")
+
+        correct_count += pos
+        incorrect_count += neg
 
     print "Correct deps: " + str(correct_count)
     print "Incorrect deps: " + str(incorrect_count)
