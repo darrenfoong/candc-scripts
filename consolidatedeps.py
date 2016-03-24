@@ -61,6 +61,7 @@ if len(sys.argv) > 1:
 
 deps = dict()
 categories = dict()
+categories_strip = dict()
 
 def convert_lines(f):
     # replaces empty entries with blank lines
@@ -87,6 +88,7 @@ def unconvert_lines(f):
     return f
 
 MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
+MARKUP_CAT = re.compile(r'\[.*?\]')
 
 def strip_markup(dep):
     if dep != "":
@@ -112,6 +114,12 @@ def canonize(dep, pos_tags):
         categories[category] = 0
     categories[category] += 1
 
+    category_strip = MARKUP_CAT.sub("", category)
+
+    if category_strip not in categories_strip:
+       categories_strip[category_strip] = 0
+    categories_strip[category_strip] += 1
+
     dep_values[0] = "_".join(head[:-1])
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
@@ -136,6 +144,7 @@ def add(dep, inc, pos_tags):
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
      open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file, \
      open(WORKING_DIR + "cats_hist", "w") as cats_hist_file, \
+     open(WORKING_DIR + "cats_strip_hist", "w") as cats_strip_hist_file, \
      open(CORRECT_DEPS_FILE, "r") as correct_deps_file, \
      open(GOLD_SUPERTAGS_FILE, "r") as gold_supertags_file:
 
@@ -221,3 +230,8 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
         cats_hist_file.write(category + " " + str(count) + "\n")
 
     print "Categories: " + str(len(categories))
+
+    for category_strip, count in sorted(categories_strip.iteritems(), key=lambda x: x[1]):
+        cats_strip_hist_file.write(category_strip + " " + str(count) + "\n")
+
+    print "Categories strip: " + str(len(categories_strip))
