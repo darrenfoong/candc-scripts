@@ -60,6 +60,7 @@ if len(sys.argv) > 1:
         NUM_CHUNKS = int(sys.argv[1])
 
 deps = dict()
+categories = dict()
 
 def convert_lines(f):
     # replaces empty entries with blank lines
@@ -105,6 +106,12 @@ def canonize(dep, pos_tags):
     head_index = int(head[-1]) - 1
     dependent_index = int(dependent[-1]) - 1
 
+    category = dep_values[1]
+
+    if category not in categories:
+        categories[category] = 0
+    categories[category] += 1
+
     dep_values[0] = "_".join(head[:-1])
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
@@ -128,6 +135,7 @@ def add(dep, inc, pos_tags):
 
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
      open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file, \
+     open(WORKING_DIR + "cats_hist", "w") as cats_hist_file, \
      open(CORRECT_DEPS_FILE, "r") as correct_deps_file, \
      open(GOLD_SUPERTAGS_FILE, "r") as gold_supertags_file:
 
@@ -208,3 +216,8 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     print "Correct deps: " + str(correct_count)
     print "Incorrect deps: " + str(incorrect_count)
     print "Tied deps: " + str(tie_count)
+
+    for category, count in sorted(categories.iteritems(), key=lambda x: x[1]):
+        cats_hist_file.write(category + " " + str(count) + "\n")
+
+    print "Categories: " + str(len(categories))
