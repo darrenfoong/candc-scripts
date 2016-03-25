@@ -101,6 +101,14 @@ def strip_markup(dep):
     else:
         return dep
 
+def get_pos_tag(pos_tags, index):
+    if index < 0:
+        return "START"
+    elif index >= len(pos_tags):
+        return "END"
+    else:
+        return pos_tags[index]
+
 def canonize(dep, pos_tags):
     dep_values = dep.split(" ")
     head = dep_values[0].split("_")
@@ -123,8 +131,13 @@ def canonize(dep, pos_tags):
     dep_values[0] = "_".join(head[:-1])
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
-    dep_values.append(pos_tags[head_index])
-    dep_values.append(pos_tags[dependent_index])
+    dep_values.append(get_pos_tag(pos_tags, head_index))
+    dep_values.append(get_pos_tag(pos_tags, dependent_index))
+
+    dep_values.append(get_pos_tag(pos_tags, head_index-1))
+    dep_values.append(get_pos_tag(pos_tags, head_index+1))
+    dep_values.append(get_pos_tag(pos_tags, dependent_index-1))
+    dep_values.append(get_pos_tag(pos_tags, dependent_index+1))
 
     dep = " ".join(dep_values)
     return dep
