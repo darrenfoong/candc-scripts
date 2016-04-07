@@ -3,18 +3,23 @@
 # The following file structure is assumed:
 # data
 # |-gold
-#   > wsj00.ccgbank_deps
 #   > wsj00.stagged.reformat
-#   > wsj02-21.ccgbank_deps
 #   > wsj02-21.stagged.reformat
+#   > wsj23.stagged.reformat
 # output
-# |-incorrect_deps_test
-#  |-split1
-#    > parser.beam.out.chartdeps
 # |-incorrect_deps
+#   > oracle.out
 #  |-split1
 #  ...
 #  |-splitN
+#    > parser.beam.out.chartdeps
+# |-incorrect_deps_dev
+#   > oracle.out
+#  |-split1
+#    > parser.beam.out.chartdeps
+# |-incorrect_deps_test
+#   > oracle.out
+#  |-split1
 #    > parser.beam.out.chartdeps
 # scripts
 # > consolidatedeps.py (this script)
@@ -31,9 +36,10 @@
 import sys
 import os
 import re
+import itertools
 
 WORKING_DIR = "../output/incorrect_deps/"
-CORRECT_DEPS_FILE = "../data/gold/wsj02-21.ccgbank_deps"
+CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
 GOLD_SUPERTAGS_FILE = "../data/gold/wsj02-21.stagged.reformat"
 
 NUM_CHUNKS = 10
@@ -50,15 +56,22 @@ CORRECT_THRESHOLD = 0
 INCORRECT_THRESHOLD = 1
 
 if len(sys.argv) > 1:
+    if sys.argv[1] == "dev":
+        NUM_CHUNKS = 1
+        WORKING_DIR = "../output/incorrect_deps_dev/"
+        CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
+        GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
     if sys.argv[1] == "test":
         NUM_CHUNKS = 1
         WORKING_DIR = "../output/incorrect_deps_test/"
-        CORRECT_DEPS_FILE = "../data/gold/wsj00.ccgbank_deps"
-        GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
+        CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
+        GOLD_SUPERTAGS_FILE = "../data/gold/wsj23.stagged.reformat"
     else:
         NUM_CHUNKS = int(sys.argv[1])
 
 deps = dict()
+categories = dict()
+categories_strip = dict()
 
 def convert_lines(f):
     # replaces empty entries with blank lines
@@ -85,6 +98,7 @@ def unconvert_lines(f):
     return f
 
 MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
+MARKUP_CAT = re.compile(r'\[.*?\]')
 
 def strip_markup(dep):
     if dep != "":
@@ -97,6 +111,14 @@ def strip_markup(dep):
     else:
         return dep
 
+def get_pos_tag(pos_tags, index):
+    if index < 0:
+        return "START"
+    elif index >= len(pos_tags):
+        return "END"
+    else:
+        return pos_tags[index]
+
 def canonize(dep, pos_tags):
     dep_values = dep.split(" ")
     head = dep_values[0].split("_")
@@ -104,11 +126,28 @@ def canonize(dep, pos_tags):
     head_index = int(head[-1]) - 1
     dependent_index = int(dependent[-1]) - 1
 
+    category = dep_values[1]
+
+    if category not in categories:
+        categories[category] = 0
+    categories[category] += 1
+
+    category_strip = MARKUP_CAT.sub("", category)
+
+    if category_strip not in categories_strip:
+       categories_strip[category_strip] = 0
+    categories_strip[category_strip] += 1
+
     dep_values[0] = "_".join(head[:-1])
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
-    dep_values.append(pos_tags[head_index])
-    dep_values.append(pos_tags[dependent_index])
+    dep_values.append(get_pos_tag(pos_tags, head_index))
+    dep_values.append(get_pos_tag(pos_tags, dependent_index))
+
+    dep_values.append(get_pos_tag(pos_tags, head_index-1))
+    dep_values.append(get_pos_tag(pos_tags, head_index+1))
+    dep_values.append(get_pos_tag(pos_tags, dependent_index-1))
+    dep_values.append(get_pos_tag(pos_tags, dependent_index+1))
 
     dep = " ".join(dep_values)
     return dep
@@ -116,13 +155,19 @@ def canonize(dep, pos_tags):
 def add(dep, inc, pos_tags):
     if dep != "":
         dep = canonize(dep, pos_tags)
-        if dep in deps:
-            deps[dep] += inc
+        if dep not in deps:
+            deps[dep] = (0, 0)
+
+        pos, neg = deps[dep]
+        if inc == 1:
+            deps[dep] = (pos+1, neg)
         else:
-            deps[dep] = inc
+            deps[dep] = (pos, neg+1)
 
 with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
      open(WORKING_DIR + "deps_incorrect", "w") as output_incorrect_deps_file, \
+     open(WORKING_DIR + "cats_hist", "w") as cats_hist_file, \
+     open(WORKING_DIR + "cats_strip_hist", "w") as cats_strip_hist_file, \
      open(CORRECT_DEPS_FILE, "r") as correct_deps_file, \
      open(GOLD_SUPERTAGS_FILE, "r") as gold_supertags_file:
 
@@ -177,15 +222,39 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
     tie_count = 0
 
     for dep, value in sorted(deps.iteritems(), key=lambda x: x[1]):
-        if value > CORRECT_THRESHOLD:
-            correct_count += 1
-            output_correct_deps_file.write(dep + " 1 " + str(value) + "\n")
-        else if value < INCORRECT_THRESHOLD:
-            if value == 0:
-                tie_count += 1
-            incorrect_count += 1
-            output_incorrect_deps_file.write(dep + " 0 " + str(value) + "\n")
+        pos, neg = value
+        #if pos > 0:
+        #    final_value = pos
+        #else:
+        #    final_value = pos - neg
+
+        #if final_value > CORRECT_THRESHOLD:
+        #    correct_count += 1
+        #    output_correct_deps_file.write(dep + " 1 " + str(final_value) + "\n")
+        #elif final_value < INCORRECT_THRESHOLD:
+        #    if final_value == 0:
+        #        tie_count += 1
+        #    incorrect_count += 1
+        #    output_incorrect_deps_file.write(dep + " 0 " + str(final_value) + "\n")
+
+        for _ in itertools.repeat(None, pos):
+            output_correct_deps_file.write(dep + " 1 " + str(pos) + "\n")
+        for _ in itertools.repeat(None, neg):
+            output_incorrect_deps_file.write(dep + " 0 " + str(neg) + "\n")
+
+        correct_count += pos
+        incorrect_count += neg
 
     print "Correct deps: " + str(correct_count)
     print "Incorrect deps: " + str(incorrect_count)
     print "Tied deps: " + str(tie_count)
+
+    for category, count in sorted(categories.iteritems(), key=lambda x: x[1]):
+        cats_hist_file.write(category + " " + str(count) + "\n")
+
+    print "Categories: " + str(len(categories))
+
+    for category_strip, count in sorted(categories_strip.iteritems(), key=lambda x: x[1]):
+        cats_strip_hist_file.write(category_strip + " " + str(count) + "\n")
+
+    print "Categories strip: " + str(len(categories_strip))
