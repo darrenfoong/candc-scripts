@@ -51,11 +51,16 @@ CORRECT_THRESHOLD = 0
 INCORRECT_THRESHOLD = 1
 
 if len(sys.argv) > 1:
+    if sys.argv[1] == "dev":
+        NUM_CHUNKS = 1
+        WORKING_DIR = "../output/incorrect_deps_dev/"
+        CORRECT_DEPS_FILE = "../data/gold/wsj00.ccgbank_deps"
+        GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
     if sys.argv[1] == "test":
         NUM_CHUNKS = 1
         WORKING_DIR = "../output/incorrect_deps_test/"
-        CORRECT_DEPS_FILE = "../data/gold/wsj00.ccgbank_deps"
-        GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
+        CORRECT_DEPS_FILE = "../data/gold/wsj23.ccgbank_deps"
+        GOLD_SUPERTAGS_FILE = "../data/gold/wsj23.stagged.reformat"
     else:
         NUM_CHUNKS = int(sys.argv[1])
 
