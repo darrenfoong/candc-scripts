@@ -3,18 +3,23 @@
 # The following file structure is assumed:
 # data
 # |-gold
-#   > wsj00.ccgbank_deps
 #   > wsj00.stagged.reformat
-#   > wsj02-21.ccgbank_deps
 #   > wsj02-21.stagged.reformat
+#   > wsj23.stagged.reformat
 # output
-# |-incorrect_deps_test
-#  |-split1
-#    > parser.beam.out.chartdeps
 # |-incorrect_deps
+#   > oracle.out
 #  |-split1
 #  ...
 #  |-splitN
+#    > parser.beam.out.chartdeps
+# |-incorrect_deps_dev
+#   > oracle.out
+#  |-split1
+#    > parser.beam.out.chartdeps
+# |-incorrect_deps_test
+#   > oracle.out
+#  |-split1
 #    > parser.beam.out.chartdeps
 # scripts
 # > consolidatedeps.py (this script)
@@ -34,7 +39,7 @@ import re
 import itertools
 
 WORKING_DIR = "../output/incorrect_deps/"
-CORRECT_DEPS_FILE = "../data/gold/wsj02-21.ccgbank_deps"
+CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
 GOLD_SUPERTAGS_FILE = "../data/gold/wsj02-21.stagged.reformat"
 
 NUM_CHUNKS = 10
@@ -54,12 +59,12 @@ if len(sys.argv) > 1:
     if sys.argv[1] == "dev":
         NUM_CHUNKS = 1
         WORKING_DIR = "../output/incorrect_deps_dev/"
-        CORRECT_DEPS_FILE = "../data/gold/wsj00.ccgbank_deps"
+        CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
         GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
     if sys.argv[1] == "test":
         NUM_CHUNKS = 1
         WORKING_DIR = "../output/incorrect_deps_test/"
-        CORRECT_DEPS_FILE = "../data/gold/wsj23.ccgbank_deps"
+        CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
         GOLD_SUPERTAGS_FILE = "../data/gold/wsj23.stagged.reformat"
     else:
         NUM_CHUNKS = int(sys.argv[1])
