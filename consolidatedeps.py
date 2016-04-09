@@ -199,7 +199,7 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
                 chart_deps = chart_dep_sent.split("\n")
                 chart_deps = map((lambda e: strip_markup(e)), chart_deps)
 
-                correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")
+                correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")[:-1]
                 gold_supertags = gold_supertags_sents[correct_deps_sent_ptr].split("\n")
 
                 pos_tags = map((lambda e: e.split(" ")[1]), gold_supertags)
