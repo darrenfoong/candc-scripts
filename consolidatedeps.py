@@ -61,7 +61,7 @@ if len(sys.argv) > 1:
         WORKING_DIR = "../output/incorrect_deps_dev/"
         CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
         GOLD_SUPERTAGS_FILE = "../data/gold/wsj00.stagged.reformat"
-    if sys.argv[1] == "test":
+    elif sys.argv[1] == "test":
         NUM_CHUNKS = 1
         WORKING_DIR = "../output/incorrect_deps_test/"
         CORRECT_DEPS_FILE = WORKING_DIR + "/oracle.out"
