@@ -170,7 +170,7 @@ MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
 MARKUP_CAT = re.compile(r'\[.*?\]')
 
 def canonize(dep, pos_tags):
-    dep_values = dep.split(" ")
+    dep_values = dep.split(" ")[:-1]
     head = dep_values[0].split("_")
     dependent = dep_values[3].split("_")
     head_index = int(head[-1]) - 1
@@ -191,7 +191,8 @@ def canonize(dep, pos_tags):
     categories_strip[category_strip] += 1
 
     dep_values[0] = "_".join(head[:-1])
-    dep_values[1] = category_strip
+    # not category_strip because stripping is done in program
+    dep_values[1] = category
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
     dep_values.append(get_pos_tag(pos_tags, head_index))
