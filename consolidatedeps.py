@@ -119,6 +119,67 @@ def get_pos_tag(pos_tags, index):
     else:
         return pos_tags[index]
 
+IGNORE = set(map(lambda x: tuple(x.split()), filter(lambda x: not x.startswith("#"), r"""
+rule_id 7
+rule_id 11
+rule_id 12
+rule_id 14
+rule_id 15
+rule_id 16
+rule_id 17
+rule_id 51
+rule_id 52
+rule_id 56
+rule_id 91
+rule_id 92
+rule_id 95
+rule_id 96
+rule_id 98
+conj 1 0
+((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 0
+((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 2
+((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 3
+((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 6
+((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 9
+((S[b]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 6
+((S[b]{_}\NP{Y}<1>){_}/PP{Z}<2>){_} 1 6
+(((S[b]{_}\NP{Y}<1>){_}/PP{Z}<2>){_}/NP{W}<3>){_} 1 6
+(S[X]{Y}/S[X]{Y}<1>){_} 1 13
+(S[X]{Y}/S[X]{Y}<1>){_} 1 5
+(S[X]{Y}/S[X]{Y}<1>){_} 1 55
+((S[X]{Y}/S[X]{Y}){Z}\(S[X]{Y}/S[X]{Y}){Z}<1>){_} 2 97
+((S[X]{Y}\NP{Z}){Y}\(S[X]{Y}<1>\NP{Z}){Y}){_} 2 4
+((S[X]{Y}\NP{Z}){Y}\(S[X]{Y}<1>\NP{Z}){Y}){_} 2 93
+((S[X]{Y}\NP{Z}){Y}\(S[X]{Y}<1>\NP{Z}){Y}){_} 2 8
+((S[X]{Y}\NP{Z}){Y}/(S[X]{Y}<1>\NP{Z}){Y}){_} 2 94
+((S[X]{Y}\NP{Z}){Y}/(S[X]{Y}<1>\NP{Z}){Y}){_} 2 18
+been ((S[pt]{_}\NP{Y}<1>){_}/(S[ng]{Z}<2>\NP{Y}){Z}){_} 1 0
+been ((S[pt]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 there 0
+been ((S[pt]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 There 0
+be ((S[b]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 there 0
+be ((S[b]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 There 0
+been ((S[pt]{_}\NP{Y}<1>){_}/(S[pss]{Z}\NP{Y}){Z}<2>){_} 1 0
+been ((S[pt]{_}\NP{Y}<1>){_}/(S[adj]{Z}\NP{Y}){Z}<2>){_} 1 0
+be ((S[b]{_}\NP{Y}<1>){_}/(S[pss]{Z}\NP{Y}){Z}<2>){_} 1 0
+have ((S[b]{_}\NP{Y}<1>){_}/(S[pt]{Z}\NP{Y}){Z}<2>){_} 1 0
+be ((S[b]{_}\NP{Y}<1>){_}/(S[adj]{Z}\NP{Y}){Z}<2>){_} 1 0
+be ((S[b]{_}\NP{Y}<1>){_}/(S[ng]{Z}\NP{Y}){Z}<2>){_} 1 0
+# be ((S[b]{_}\NP{Y}<1>){_}/(S[pss]{Z}<2>\NP{Y}){Z}){_} 1 0
+going ((S[ng]{_}\NP{Y}<1>){_}/(S[to]{Z}<2>\NP{Y}){Z}){_} 1 0
+have ((S[b]{_}\NP{Y}<1>){_}/(S[to]{Z}\NP{Y}){Z}<2>){_} 1 0
+Here (S[adj]{_}\NP{Y}<1>){_} 1 0
+# this is a dependency Julia doesn't have but looks okay
+from (((NP{Y}\NP{Y}<1>){_}/(NP{Z}\NP{Z}){W}<3>){_}/NP{V}<2>){_} 1 0
+""".strip().split("\n"))))
+
+def ignore(dep):
+    (head, category, slot, dependent, rule_id) = dep.split(" ")
+    res = ('rule_id', rule_id) in IGNORE or \
+          (cat, slot, rule_id) in IGNORE or \
+          (pred, cat, slot, rule_id) in IGNORE or \
+          (pred, cat, slot, arg, rule_id) in IGNORE
+    return res
+
 def canonize(dep, pos_tags):
     dep_values = dep.split(" ")
     head = dep_values[0].split("_")
@@ -154,6 +215,10 @@ def canonize(dep, pos_tags):
 
 def add(dep, inc, pos_tags):
     if dep != "":
+        if ignore(dep):
+            print "Ignored: " + dep
+            return
+
         dep = canonize(dep, pos_tags)
         if dep not in deps:
             deps[dep] = (0, 0)
