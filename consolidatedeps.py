@@ -97,20 +97,6 @@ def unconvert_lines(f):
         f = f.replace(current, repl)
     return f
 
-MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
-MARKUP_CAT = re.compile(r'\[.*?\]')
-
-def strip_markup(dep):
-    if dep != "":
-        dep_values = dep.split(" ")[:-1]
-        category = MARKUP.sub("", dep_values[1])
-        if category[0] == "(":
-            category = category[1:-1]
-        dep_values[1] = category
-        return " ".join(dep_values)
-    else:
-        return dep
-
 def get_pos_tag(pos_tags, index):
     if index < 0:
         return "START"
@@ -175,10 +161,13 @@ from (((NP{Y}\NP{Y}<1>){_}/(NP{Z}\NP{Z}){W}<3>){_}/NP{V}<2>){_} 1 0
 def ignore(dep):
     (head, category, slot, dependent, rule_id) = dep.split(" ")
     res = ('rule_id', rule_id) in IGNORE or \
-          (cat, slot, rule_id) in IGNORE or \
-          (pred, cat, slot, rule_id) in IGNORE or \
-          (pred, cat, slot, arg, rule_id) in IGNORE
+          (category, slot, rule_id) in IGNORE or \
+          (head, category, slot, rule_id) in IGNORE or \
+          (head, category, slot, dependent, rule_id) in IGNORE
     return res
+
+MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
+MARKUP_CAT = re.compile(r'\[.*?\]')
 
 def canonize(dep, pos_tags):
     dep_values = dep.split(" ")
@@ -187,7 +176,9 @@ def canonize(dep, pos_tags):
     head_index = int(head[-1]) - 1
     dependent_index = int(dependent[-1]) - 1
 
-    category = dep_values[1]
+    category = MARKUP.sub("", dep_values[1])
+    if category[0] == "(":
+        category = category[1:-1]
 
     if category not in categories:
         categories[category] = 0
@@ -200,6 +191,7 @@ def canonize(dep, pos_tags):
     categories_strip[category_strip] += 1
 
     dep_values[0] = "_".join(head[:-1])
+    dep_values[1] = category_strip
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
     dep_values.append(get_pos_tag(pos_tags, head_index))
@@ -262,13 +254,9 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
             for chart_dep_sent in chart_deps_sents:
                 print("Processing sentence " + str(correct_deps_sent_ptr+1))
                 chart_deps = chart_dep_sent.split("\n")
-                chart_deps = map((lambda e: strip_markup(e)), chart_deps)
-
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")[:-1]
-                correct_deps = map((lambda e: strip_markup(e)), correct_deps)
 
                 gold_supertags = gold_supertags_sents[correct_deps_sent_ptr].split("\n")
-
                 pos_tags = map((lambda e: e.split(" ")[1]), gold_supertags)
 
                 for incorrect_dep in set(chart_deps) - set(correct_deps):
