@@ -208,9 +208,9 @@ def canonize(dep, pos_tags):
 
 def add(dep, inc, pos_tags):
     if dep != "":
-        if ignore(dep):
-            print "Ignored: " + dep
-            return
+        #if ignore(dep):
+        #    print "Ignored: " + dep
+        #    return
 
         dep = canonize(dep, pos_tags)
         if dep not in deps:
