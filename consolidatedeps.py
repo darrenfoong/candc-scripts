@@ -97,6 +97,20 @@ def unconvert_lines(f):
         f = f.replace(current, repl)
     return f
 
+MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
+MARKUP_CAT = re.compile(r'\[.*?\]')
+
+def strip_markup(dep):
+    if dep != "":
+        dep_values = dep.split(" ")[:-1]
+        category = MARKUP.sub("", dep_values[1])
+        if category[0] == "(":
+            category = category[1:-1]
+        dep_values[1] = category
+        return " ".join(dep_values)
+    else:
+        return dep
+
 def get_pos_tag(pos_tags, index):
     if index < 0:
         return "START"
@@ -105,80 +119,14 @@ def get_pos_tag(pos_tags, index):
     else:
         return pos_tags[index]
 
-IGNORE = set(map(lambda x: tuple(x.split()), filter(lambda x: not x.startswith("#"), r"""
-rule_id 7
-rule_id 11
-rule_id 12
-rule_id 14
-rule_id 15
-rule_id 16
-rule_id 17
-rule_id 51
-rule_id 52
-rule_id 56
-rule_id 91
-rule_id 92
-rule_id 95
-rule_id 96
-rule_id 98
-conj 1 0
-((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 0
-((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 2
-((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 3
-((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 6
-((S[to]{_}\NP{Y}<1>){_}/(S[b]{Z}\NP{Y}){Z}<2>){_} 1 9
-((S[b]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 6
-((S[b]{_}\NP{Y}<1>){_}/PP{Z}<2>){_} 1 6
-(((S[b]{_}\NP{Y}<1>){_}/PP{Z}<2>){_}/NP{W}<3>){_} 1 6
-(S[X]{Y}/S[X]{Y}<1>){_} 1 13
-(S[X]{Y}/S[X]{Y}<1>){_} 1 5
-(S[X]{Y}/S[X]{Y}<1>){_} 1 55
-((S[X]{Y}/S[X]{Y}){Z}\(S[X]{Y}/S[X]{Y}){Z}<1>){_} 2 97
-((S[X]{Y}\NP{Z}){Y}\(S[X]{Y}<1>\NP{Z}){Y}){_} 2 4
-((S[X]{Y}\NP{Z}){Y}\(S[X]{Y}<1>\NP{Z}){Y}){_} 2 93
-((S[X]{Y}\NP{Z}){Y}\(S[X]{Y}<1>\NP{Z}){Y}){_} 2 8
-((S[X]{Y}\NP{Z}){Y}/(S[X]{Y}<1>\NP{Z}){Y}){_} 2 94
-((S[X]{Y}\NP{Z}){Y}/(S[X]{Y}<1>\NP{Z}){Y}){_} 2 18
-been ((S[pt]{_}\NP{Y}<1>){_}/(S[ng]{Z}<2>\NP{Y}){Z}){_} 1 0
-been ((S[pt]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 there 0
-been ((S[pt]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 There 0
-be ((S[b]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 there 0
-be ((S[b]{_}\NP{Y}<1>){_}/NP{Z}<2>){_} 1 There 0
-been ((S[pt]{_}\NP{Y}<1>){_}/(S[pss]{Z}\NP{Y}){Z}<2>){_} 1 0
-been ((S[pt]{_}\NP{Y}<1>){_}/(S[adj]{Z}\NP{Y}){Z}<2>){_} 1 0
-be ((S[b]{_}\NP{Y}<1>){_}/(S[pss]{Z}\NP{Y}){Z}<2>){_} 1 0
-have ((S[b]{_}\NP{Y}<1>){_}/(S[pt]{Z}\NP{Y}){Z}<2>){_} 1 0
-be ((S[b]{_}\NP{Y}<1>){_}/(S[adj]{Z}\NP{Y}){Z}<2>){_} 1 0
-be ((S[b]{_}\NP{Y}<1>){_}/(S[ng]{Z}\NP{Y}){Z}<2>){_} 1 0
-# be ((S[b]{_}\NP{Y}<1>){_}/(S[pss]{Z}<2>\NP{Y}){Z}){_} 1 0
-going ((S[ng]{_}\NP{Y}<1>){_}/(S[to]{Z}<2>\NP{Y}){Z}){_} 1 0
-have ((S[b]{_}\NP{Y}<1>){_}/(S[to]{Z}\NP{Y}){Z}<2>){_} 1 0
-Here (S[adj]{_}\NP{Y}<1>){_} 1 0
-# this is a dependency Julia doesn't have but looks okay
-from (((NP{Y}\NP{Y}<1>){_}/(NP{Z}\NP{Z}){W}<3>){_}/NP{V}<2>){_} 1 0
-""".strip().split("\n"))))
-
-def ignore(dep):
-    (head, category, slot, dependent, rule_id) = dep.split(" ")
-    res = ('rule_id', rule_id) in IGNORE or \
-          (category, slot, rule_id) in IGNORE or \
-          (head, category, slot, rule_id) in IGNORE or \
-          (head, category, slot, dependent, rule_id) in IGNORE
-    return res
-
-MARKUP = re.compile(r'<[0-9]>|\{[A-Z_]\*?\}|\[X\]')
-MARKUP_CAT = re.compile(r'\[.*?\]')
-
 def canonize(dep, pos_tags):
-    dep_values = dep.split(" ")[:-1]
+    dep_values = dep.split(" ")
     head = dep_values[0].split("_")
     dependent = dep_values[3].split("_")
     head_index = int(head[-1]) - 1
     dependent_index = int(dependent[-1]) - 1
 
-    category = MARKUP.sub("", dep_values[1])
-    if category[0] == "(":
-        category = category[1:-1]
+    category = dep_values[1]
 
     if category not in categories:
         categories[category] = 0
@@ -191,8 +139,6 @@ def canonize(dep, pos_tags):
     categories_strip[category_strip] += 1
 
     dep_values[0] = "_".join(head[:-1])
-    # not category_strip because stripping is done in program
-    dep_values[1] = category
     dep_values[3] = "_".join(dependent[:-1])
     dep_values.append(str(abs(head_index - dependent_index)))
     dep_values.append(get_pos_tag(pos_tags, head_index))
@@ -208,10 +154,6 @@ def canonize(dep, pos_tags):
 
 def add(dep, inc, pos_tags):
     if dep != "":
-        #if ignore(dep):
-        #    print "Ignored: " + dep
-        #    return
-
         dep = canonize(dep, pos_tags)
         if dep not in deps:
             deps[dep] = (0, 0)
@@ -255,9 +197,13 @@ with open(WORKING_DIR + "deps_correct", "w") as output_correct_deps_file, \
             for chart_dep_sent in chart_deps_sents:
                 print("Processing sentence " + str(correct_deps_sent_ptr+1))
                 chart_deps = chart_dep_sent.split("\n")
+                chart_deps = map((lambda e: strip_markup(e)), chart_deps)
+
                 correct_deps = correct_deps_sents[correct_deps_sent_ptr].split("\n")[:-1]
+                correct_deps = map((lambda e: strip_markup(e)), correct_deps)
 
                 gold_supertags = gold_supertags_sents[correct_deps_sent_ptr].split("\n")
+
                 pos_tags = map((lambda e: e.split(" ")[1]), gold_supertags)
 
                 for incorrect_dep in set(chart_deps) - set(correct_deps):
