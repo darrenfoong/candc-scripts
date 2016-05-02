@@ -26,12 +26,16 @@
 
 # The following files will be created:
 # output
-# |-incorrect_deps_test
-#   > deps_correct
-#   > deps_incorrect
 # |-incorrect_deps
 #   > deps_correct
 #   > deps_incorrect
+# |-incorrect_deps_dev
+#   > deps_correct
+#   > deps_incorrect
+# |-incorrect_deps_test
+#   > deps_correct
+#   > deps_incorrect
+
 
 import sys
 import os
